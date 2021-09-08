@@ -17,5 +17,7 @@
     <string name="order_chat">¿Necesitas Ayuda?</string>
     <string name="order_title">Hisstorial de compras</string>
     <string name="order_total_price">Total: %1$.2f USD</string>
+    <string name="hint_status">Estado</string>
+    <string name="chat_title">Soporte</string>
 
 </resources>

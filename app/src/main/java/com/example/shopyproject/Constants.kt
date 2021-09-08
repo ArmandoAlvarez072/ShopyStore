@@ -1,8 +1,14 @@
 package com.example.shopyproject
 
-object Constants {
+object  Constants {
     const val COLL_PRODUCTS = "products"
+    const val COLL_REQUEST = "request"
+    const val PROP_STATUS = "status"
+
     //Storage
     const val PATH_PRODUCTS_IMAGES = "product_images"
-    const val COLL_REQUEST = "request"
+
+    //RealtimeDatabase
+    const val PATH_CHAT = "chats"
+
 }

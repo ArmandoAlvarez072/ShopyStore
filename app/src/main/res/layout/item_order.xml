@@ -11,26 +11,23 @@
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/common_padding_min">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnTracker"
-            android:layout_width="wrap_content"
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilStatus"
+            android:layout_width="200dp"
             android:layout_height="wrap_content"
-            app:layout_constraintBottom_toBottomOf="parent"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense.ExposedDropdownMenu"
             app:layout_constraintEnd_toEndOf="parent"
-            app:icon="@drawable/ic_local_shipping_"
-            app:iconGravity="textEnd"
-            android:text="@string/order_tracker_shippment"/>
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:hint="@string/hint_status" >
 
-        <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/tvStatus"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:text="@string/order_status"
-            android:textAppearance="?attr/textAppearanceSubtitle2"
-            app:layout_constraintTop_toTopOf="@id/btnTracker"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintBottom_toBottomOf="@id/btnTracker"
-            app:layout_constraintEnd_toStartOf="@id/btnTracker" />
+            <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                android:id="@+id/actvStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none"/>
+
+        </com.google.android.material.textfield.TextInputLayout>
+
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/tvId"
@@ -59,7 +56,7 @@
             android:text="@string/order_chat"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/tvProductNames"
-            app:layout_constraintBottom_toTopOf="@id/btnTracker"/>
+            app:layout_constraintBottom_toTopOf="@id/tilStatus"/>
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/tvTotalPrice"

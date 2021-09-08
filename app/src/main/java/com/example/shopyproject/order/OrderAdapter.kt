@@ -4,6 +4,7 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ArrayAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.shopyproject.R
 import com.example.shopyproject.databinding.ItemOrderBinding
@@ -25,7 +26,11 @@ class OrderAdapter(private val orderList : MutableList<Order>,
         val binding = ItemOrderBinding.bind(view)
 
         fun setListener(order : Order){
-            binding.chipChat.setOnCloseIconClickListener {
+            binding.actvStatus.setOnItemClickListener { adapterView, view, position, id ->
+                order.status = arrayKeys[position]
+                listener.onStatusChanged(order)
+            }
+            binding.chipChat.setOnClickListener {
                 listener.onStartChat(order)
             }
         }
@@ -49,8 +54,15 @@ class OrderAdapter(private val orderList : MutableList<Order>,
         holder.binding.tvProductNames.text = names.dropLast(2)
         holder.binding.tvTotalPrice.text = context.getString(R.string.order_total_price, order.totalPrice)
         val index = arrayKeys.indexOf(order.status)
-        val statusStr = if (index !=-1) arrayValues[index] else context.getString(R.string.order_status_unknown)
-        holder.binding.tvStatus.text = context.getString(R.string.order_status, statusStr)
+        val statusAdapter = ArrayAdapter(context, android.R.layout.simple_dropdown_item_1line, arrayValues)
+        holder.binding.actvStatus.setAdapter(statusAdapter)
+        if (index != -1){
+            holder.binding.actvStatus.setText(arrayValues[index], false)
+        }else{
+            holder.binding.actvStatus.setText(context.getText(R.string.order_status_unknown), false)
+        }
+
+
     }
 
     override fun getItemCount(): Int = orderList.size
