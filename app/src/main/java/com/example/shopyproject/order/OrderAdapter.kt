@@ -14,6 +14,7 @@ class OrderAdapter(private val orderList : MutableList<Order>,
                    private val listener: OnOrderListener) : RecyclerView.Adapter<OrderAdapter.ViewHolder>(){
 
     private lateinit var context: Context
+
     private val arrayValues : Array<String> by lazy {
         context.resources.getStringArray(R.array.status_value)
     }
@@ -47,11 +48,7 @@ class OrderAdapter(private val orderList : MutableList<Order>,
         val order = orderList[position]
         holder.setListener(order)
         holder.binding.tvId.text = context.getString(R.string.order_id, order.id)
-        var names = ""
-        order.products.forEach{
-            names += "${it.value.name}, "
-        }
-        holder.binding.tvProductNames.text = names.dropLast(2)
+
         holder.binding.tvTotalPrice.text = context.getString(R.string.order_total_price, order.totalPrice)
         val index = arrayKeys.indexOf(order.status)
         val statusAdapter = ArrayAdapter(context, android.R.layout.simple_dropdown_item_1line, arrayValues)

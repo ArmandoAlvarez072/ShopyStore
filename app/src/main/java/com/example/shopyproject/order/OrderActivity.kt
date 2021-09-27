@@ -10,6 +10,7 @@ import com.example.shopyproject.R
 import com.example.shopyproject.chat.ChatFragment
 import com.example.shopyproject.databinding.ActivityOrderBinding
 import com.example.shopyproject.entities.Order
+import com.example.shopyproject.fcm.NotificationRS
 import com.google.firebase.firestore.FirebaseFirestore
 
 class OrderActivity : AppCompatActivity() ,OnOrderListener ,OrderAux{
@@ -17,6 +18,13 @@ class OrderActivity : AppCompatActivity() ,OnOrderListener ,OrderAux{
     private lateinit var binding : ActivityOrderBinding
     private lateinit var adapter: OrderAdapter
     private lateinit var orderSelected : Order
+
+    private val arrayValues : Array<String> by lazy {
+        resources.getStringArray(R.array.status_value)
+    }
+    private val arrayKeys : Array<Int> by lazy {
+        resources.getIntArray(R.array.status_key).toTypedArray()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,6 +58,43 @@ class OrderActivity : AppCompatActivity() ,OnOrderListener ,OrderAux{
             }
     }
 
+    private fun notifyClient(order: Order){
+        val db = FirebaseFirestore.getInstance()
+        db.collection(Constants.COLL_USERS)
+            .document(order.clientId)
+            .collection(Constants.COLL_TOKENS)
+            .get()
+            .addOnSuccessListener {
+                var tokensStr = ""
+                for (document in it){
+                    val tokenMap = document.data
+                    tokensStr += "${tokenMap.getValue(Constants.PROP_TOKEN)}, "
+                }
+                if (tokensStr.length > 0) {
+                    tokensStr = tokensStr.dropLast(1)
+
+                    var names = ""
+                    order.products.forEach {
+                        names += "${it.value.name}, "
+                    }
+                    names = names.dropLast(2)
+
+                    val index = arrayKeys.indexOf(order.status)
+
+                    val notificationRS = NotificationRS()
+                    notificationRS.sendNotification(
+                        "Tu pedido ha sido ${arrayValues[index]}",
+                        names,
+                        tokensStr
+                    )
+
+                }
+            }
+            .addOnFailureListener {
+                Toast.makeText(this, "Error al enviar mensaje", Toast.LENGTH_SHORT).show()
+            }
+    }
+
 
     override fun onStartChat(order: Order) {
         orderSelected = order
@@ -70,6 +115,7 @@ class OrderActivity : AppCompatActivity() ,OnOrderListener ,OrderAux{
             .update(Constants.PROP_STATUS, order.status)
             .addOnSuccessListener {
                 Toast.makeText(this, "Orden Actualizada", Toast.LENGTH_SHORT).show()
+                notifyClient(order)
             }
             .addOnFailureListener {
                 Toast.makeText(this, "Error al actualizar", Toast.LENGTH_SHORT).show()
