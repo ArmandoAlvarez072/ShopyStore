@@ -18,10 +18,14 @@ import com.example.shopyproject.order.OrderActivity
 import com.firebase.ui.auth.AuthUI
 import com.firebase.ui.auth.ErrorCodes
 import com.firebase.ui.auth.IdpResponse
+import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.analytics.ktx.analytics
+import com.google.firebase.analytics.ktx.logEvent
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.ktx.Firebase
 
 class MainActivity : AppCompatActivity() , OnProductListener, MainAux {
     private lateinit var firebaseAuth: FirebaseAuth
@@ -31,6 +35,8 @@ class MainActivity : AppCompatActivity() , OnProductListener, MainAux {
     private lateinit var firestoreListener : ListenerRegistration
     private  var productSelected : Product? = null
 
+    private lateinit var firebaseAnalytics: FirebaseAnalytics
+
     private val resultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()){
         val response = IdpResponse.fromResultIntent(it.data)
 
@@ -38,9 +44,21 @@ class MainActivity : AppCompatActivity() , OnProductListener, MainAux {
             val user = FirebaseAuth.getInstance().currentUser
             if(user!=null){
                 Toast.makeText(this, "Bienvenido", Toast.LENGTH_SHORT).show()
+
+                firebaseAnalytics.logEvent(FirebaseAnalytics.Event.LOGIN){
+                    param(FirebaseAnalytics.Param.SUCCESS, 100)//100 Login succesfully
+                    param(FirebaseAnalytics.Param.METHOD, "login")//100 Login succesfully
+                }
+
             }else {
                 if(response==null){
                     Toast.makeText(this, "Adios", Toast.LENGTH_SHORT).show()
+
+                    firebaseAnalytics.logEvent(FirebaseAnalytics.Event.LOGIN){
+                        param(FirebaseAnalytics.Param.SUCCESS, 200)//200 Login cancel
+                        param(FirebaseAnalytics.Param.METHOD, "login")
+                    }
+
                     finish()
                 } else {
                     response.error?.let{
@@ -49,6 +67,11 @@ class MainActivity : AppCompatActivity() , OnProductListener, MainAux {
                         }else{
                             Toast.makeText(this, "Codigo de Error: ${it.errorCode}",
                                 Toast.LENGTH_SHORT).show()
+                        }
+
+                        firebaseAnalytics.logEvent(FirebaseAnalytics.Event.LOGIN){
+                            param(FirebaseAnalytics.Param.SUCCESS,it.errorCode.toLong())
+                            param(FirebaseAnalytics.Param.METHOD, "login")
                         }
                     }
                 }
@@ -66,8 +89,8 @@ class MainActivity : AppCompatActivity() , OnProductListener, MainAux {
         //configFirestore()
         //configFirestoreRealtime()
         configButtons()
+        configAnalytics()
     }
-
 
     override fun onResume() {
         super.onResume()
@@ -92,6 +115,11 @@ class MainActivity : AppCompatActivity() , OnProductListener, MainAux {
                 AuthUI.getInstance().signOut(this)
                     .addOnSuccessListener {
                         Toast.makeText(this, "Sesion Terminada", Toast.LENGTH_SHORT).show()
+
+                        firebaseAnalytics.logEvent(FirebaseAnalytics.Event.LOGIN){
+                            param(FirebaseAnalytics.Param.SUCCESS, 200)//100 sign out success
+                            param(FirebaseAnalytics.Param.METHOD, "sign_out")
+                        }
                     }
                     .addOnCompleteListener{
                         if (it.isSuccessful){
@@ -100,6 +128,11 @@ class MainActivity : AppCompatActivity() , OnProductListener, MainAux {
                             binding.efab.hide()
                         }else{
                             Toast.makeText(this, "No se pudo cerrar la sesión", Toast.LENGTH_SHORT).show()
+
+                            firebaseAnalytics.logEvent(FirebaseAnalytics.Event.LOGIN){
+                                param(FirebaseAnalytics.Param.SUCCESS, 201)//201 error sign_out
+                                param(FirebaseAnalytics.Param.METHOD, "sign_out")
+                            }
                         }
                     }
             }
@@ -147,6 +180,10 @@ class MainActivity : AppCompatActivity() , OnProductListener, MainAux {
             }
         }
 
+    }
+
+    private fun configAnalytics() {
+        firebaseAnalytics = Firebase.analytics
     }
 
     private fun configFirestore() {

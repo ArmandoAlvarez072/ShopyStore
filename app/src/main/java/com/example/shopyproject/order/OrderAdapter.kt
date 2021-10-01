@@ -18,6 +18,7 @@ class OrderAdapter(private val orderList : MutableList<Order>,
     private val arrayValues : Array<String> by lazy {
         context.resources.getStringArray(R.array.status_value)
     }
+
     private val arrayKeys : Array<Int> by lazy {
         context.resources.getIntArray(R.array.status_key).toTypedArray()
     }
