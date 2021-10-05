@@ -27,6 +27,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:padding="@dimen/common_padding_min"
+            android:background="@drawable/background_chat_client"
             app:layout_constraintBottom_toBottomOf="@id/imgProduct"
             app:layout_constraintEnd_toEndOf="@id/imgProduct"
             tools:text="x5" />

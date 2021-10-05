@@ -5,7 +5,10 @@ import android.app.AlertDialog
 import android.app.Dialog
 import android.content.DialogInterface
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.ImageDecoder
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.view.LayoutInflater
@@ -21,8 +24,10 @@ import com.example.shopyproject.entities.EventPost
 import com.example.shopyproject.entities.Product
 import com.example.shopyproject.databinding.DialogFragmentAddBinding
 import com.example.shopyproject.product.MainAux
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
+import java.io.ByteArrayOutputStream
 
 class AddDialogFragment :DialogFragment(), DialogInterface.OnShowListener {
 
@@ -75,7 +80,8 @@ class AddDialogFragment :DialogFragment(), DialogInterface.OnShowListener {
             positiveButton?.setOnClickListener{
                 binding?.let {
                     enableUI(false)
-                    uploadImage(product?.id){ eventPost ->
+                    //uploadImage(product?.id){ eventPost ->
+                    uploadReduceImage(product?.id){ eventPost ->
                         if (eventPost.isSuccess) {
                             if (product == null) {
                                 val product = Product(
@@ -147,9 +153,10 @@ class AddDialogFragment :DialogFragment(), DialogInterface.OnShowListener {
         eventPost.documentId = productId?: FirebaseFirestore
             .getInstance()
             .collection(Constants.COLL_PRODUCTS).document().id
-        val  storageRef = FirebaseStorage.getInstance().reference.child(Constants.PATH_PRODUCTS_IMAGES)
+        val storageRef = FirebaseStorage.getInstance().reference.child(Constants.PATH_PRODUCTS_IMAGES)
         photoSelectedUri?.let { uri ->
             binding?.let{ binding ->
+
                 binding.progressBar.visibility = View.VISIBLE
                 val  photoRef = storageRef.child(eventPost.documentId!!)
                 photoRef.putFile(uri)
@@ -175,6 +182,90 @@ class AddDialogFragment :DialogFragment(), DialogInterface.OnShowListener {
                     }
             }
         }
+    }
+
+    private fun uploadReduceImage(productId: String?, callback: (EventPost)->Unit){
+        val eventPost = EventPost()
+
+        eventPost.documentId = productId?: FirebaseFirestore
+            .getInstance()
+            .collection(Constants.COLL_PRODUCTS).document().id
+
+        FirebaseAuth.getInstance().currentUser?.let { user ->
+            val imageRef = FirebaseStorage.getInstance()
+                .reference
+                .child(user.uid)
+                .child(Constants.PATH_PRODUCTS_IMAGES)
+
+            val photoRef = imageRef.child(eventPost.documentId!!)
+
+            photoSelectedUri?.let { uri ->
+                binding?.let { binding ->
+
+                    getBitmapFromUri(uri)?.let { bitmap ->
+                        binding.progressBar.visibility = View.VISIBLE
+
+
+                        val baos = ByteArrayOutputStream()
+                        bitmap.compress(Bitmap.CompressFormat.JPEG, 90, baos)
+
+                        photoRef.putFile(uri)
+                            .addOnProgressListener {
+                                val progress =
+                                    (100 * it.bytesTransferred / it.totalByteCount).toInt()
+                                it.run {
+                                    binding.progressBar.progress = progress
+                                    binding.tvProgress.text = String.format("%s%%", progress)
+                                }
+                            }
+                            .addOnSuccessListener {
+                                it.storage.downloadUrl.addOnSuccessListener { downloadUrl ->
+                                    eventPost.isSuccess = true
+                                    eventPost.photoUrl = downloadUrl.toString()
+                                    callback(eventPost)
+                                }
+                            }
+                            .addOnFailureListener {
+                                enableUI(true)
+                                Toast.makeText(activity, "Error", Toast.LENGTH_SHORT).show()
+                                eventPost.isSuccess = false
+                                callback(eventPost)
+                            }
+                    }
+
+                }
+            }
+        }
+    }
+
+    private fun getResizedImage(image : Bitmap, maxSize : Int) : Bitmap {
+        var width = image.width
+        var height = image.height
+        if (width <= maxSize && height <= maxSize )
+            return image
+        val bitmapRatio = width.toFloat() / height.toFloat()
+        if (bitmapRatio > 1) {
+            width = maxSize
+            height = (width / bitmapRatio).toInt()
+        } else {
+            height = maxSize
+            width = (height / bitmapRatio).toInt()
+        }
+
+        return Bitmap.createScaledBitmap(image, width, height, true)
+    }
+
+    private fun getBitmapFromUri(uri : Uri) : Bitmap?{
+        activity?.let{
+            val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                val source = ImageDecoder.createSource(it.contentResolver, uri)
+                ImageDecoder.decodeBitmap(source)
+            }else {
+                MediaStore.Images.Media.getBitmap(it.contentResolver, uri)
+            }
+            return getResizedImage(bitmap, 320)
+        }
+        return null
     }
 
     private fun save(product: Product, documentId: String){
